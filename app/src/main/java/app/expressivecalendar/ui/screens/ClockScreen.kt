@@ -67,7 +67,6 @@ import app.expressivecalendar.ui.ClockSubTab
 import app.expressivecalendar.ui.ClockViewModel
 import app.expressivecalendar.ui.PomodoroMode
 import app.expressivecalendar.ui.elasticClickable
-import app.expressivecalendar.ui.theme.headlineFont
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
@@ -212,7 +211,6 @@ private fun PomodoroSection(vm: ClockViewModel) {
                 Text(
                     text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds),
                     style = MaterialTheme.typography.displayLarge.copy(
-                        fontFamily = headlineFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = 52.sp
                     ),
@@ -374,7 +372,6 @@ private fun TimerSection(vm: ClockViewModel) {
                 Text(
                     text = formatted,
                     style = MaterialTheme.typography.displayLarge.copy(
-                        fontFamily = headlineFont,
                         fontWeight = FontWeight.Bold,
                         fontSize = if (hours > 0) 42.sp else 52.sp
                     ),
@@ -444,7 +441,7 @@ private fun AlarmSection(vm: ClockViewModel) {
         ) {
             Text(
                 text = "Alarms",
-                style = MaterialTheme.typography.titleLarge.copy(fontFamily = headlineFont, fontWeight = FontWeight.Bold)
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
             )
             IconButton(
                 onClick = { showAddDialog = true },
@@ -510,7 +507,7 @@ private fun AlarmRowItem(
             val timeStr = String.format(Locale.getDefault(), "%02d:%02d", alarm.hour, alarm.minute)
             Text(
                 text = timeStr,
-                style = MaterialTheme.typography.headlineLarge.copy(fontFamily = headlineFont, fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
                 color = if (alarm.isEnabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
             )
             Text(
@@ -549,7 +546,7 @@ private fun AddAlarmDialog(
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Set Alarm", style = MaterialTheme.typography.titleLarge.copy(fontFamily = headlineFont, fontWeight = FontWeight.Bold))
+            Text("Set Alarm", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
             Spacer(Modifier.height(16.dp))
 
             // Time Selector (Expressive counter)
@@ -636,7 +633,7 @@ private fun AnalyticsSection(vm: ClockViewModel) {
         item {
             Text(
                 text = "Select a date on Calendar to inspect",
-                style = MaterialTheme.typography.titleMedium.copy(fontFamily = headlineFont, fontWeight = FontWeight.Bold),
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Spacer(Modifier.height(8.dp))
@@ -725,7 +722,7 @@ private fun AnalyticsCard(
     ) {
         Text(title, style = MaterialTheme.typography.labelMedium, color = textCol.copy(alpha = 0.8f))
         Spacer(Modifier.height(4.dp))
-        Text("${minutes}m", style = MaterialTheme.typography.headlineSmall.copy(fontFamily = headlineFont, fontWeight = FontWeight.Bold), color = textCol)
+        Text("${minutes}m", style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold), color = textCol)
         Text("focus", style = MaterialTheme.typography.labelSmall, color = textCol.copy(alpha = 0.6f))
     }
 }
