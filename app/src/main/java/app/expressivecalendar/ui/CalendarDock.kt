@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Schedule
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.CalendarViewDay
 import androidx.compose.material.icons.outlined.ViewAgenda
@@ -47,10 +48,11 @@ import app.expressivecalendar.data.CalendarView
 enum class Tab(val label: String, val icon: ImageVector, val view: CalendarView) {
     MONTH("Month", Icons.Outlined.CalendarMonth, CalendarView.MONTH),
     AGENDA("Agenda", Icons.Outlined.ViewAgenda, CalendarView.AGENDA),
-    DAY("Day", Icons.Outlined.CalendarViewDay, CalendarView.DAY);
+    DAY("Day", Icons.Outlined.CalendarViewDay, CalendarView.DAY),
+    CLOCK("Clock", Icons.Outlined.Schedule, CalendarView.CLOCK);
 
     companion object {
-        fun of(v: CalendarView) = entries.first { it.view == v }
+        fun of(v: CalendarView) = entries.firstOrNull { it.view == v } ?: MONTH
     }
 }
 
@@ -151,6 +153,7 @@ private fun RowScope.DockItem(tab: Tab, selected: Boolean, iconColor: Color, onC
                 rotation.animateTo(-3f, tween(65)); rotation.animateTo(0f, tween(65))
             }
             Tab.DAY -> rotation.animateTo(180f, tween(320))
+            Tab.CLOCK -> rotation.animateTo(360f, tween(380))
         }
         rotation.snapTo(0f)
     }
@@ -183,5 +186,5 @@ private fun RowScope.DockItem(tab: Tab, selected: Boolean, iconColor: Color, onC
 }
 
 val DOCK_HEIGHT = 72.dp
-private val DOCK_WIDTH = 204.dp
+private val DOCK_WIDTH = 256.dp
 private val FAB_GAP = 10.dp

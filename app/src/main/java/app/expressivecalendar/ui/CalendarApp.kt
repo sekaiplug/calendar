@@ -65,6 +65,7 @@ import app.expressivecalendar.data.EventDraft
 import app.expressivecalendar.data.EventInstance
 import app.expressivecalendar.data.Holiday
 import app.expressivecalendar.ui.screens.AgendaScreen
+import app.expressivecalendar.ui.screens.ClockScreen
 import app.expressivecalendar.ui.screens.DayScreen
 import app.expressivecalendar.ui.screens.MonthScreen
 import app.expressivecalendar.ui.screens.PermissionScreen
@@ -131,6 +132,7 @@ fun CalendarApp(vm: CalendarViewModel = viewModel()) {
 
 @Composable
 private fun MainShell(vm: CalendarViewModel) {
+    val clockVm: ClockViewModel = viewModel()
     val settings by vm.settings.collectAsStateWithLifecycle()
     val events by vm.events.collectAsStateWithLifecycle()
     val holidays by vm.holidays.collectAsStateWithLifecycle()
@@ -296,6 +298,10 @@ private fun MainShell(vm: CalendarViewModel) {
                             onEventClick = { detail = it },
                             onHolidayClick = { holidayDetail = it },
                             onNewEventAt = { newEvent(newDraftFor(it.toLocalDate(), settings.defaultReminderMinutes, it.toLocalTime())) },
+                            contentPadding = PaddingValues(top = 48.dp, bottom = DOCK_RESERVE + WindowInsets.navigationBars.asPaddingValuesBottom()),
+                        )
+                        Tab.CLOCK -> ClockScreen(
+                            vm = clockVm,
                             contentPadding = PaddingValues(top = 48.dp, bottom = DOCK_RESERVE + WindowInsets.navigationBars.asPaddingValuesBottom()),
                         )
                     }

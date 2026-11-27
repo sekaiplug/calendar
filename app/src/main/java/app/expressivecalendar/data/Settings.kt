@@ -45,7 +45,7 @@ data class ThemeSettings(
 
 enum class DarkMode(val label: String) { SYSTEM("System"), LIGHT("Light"), DARK("Dark") }
 
-enum class CalendarView(val label: String) { MONTH("Month"), AGENDA("Agenda"), DAY("Day") }
+enum class CalendarView(val label: String) { MONTH("Month"), AGENDA("Agenda"), DAY("Day"), CLOCK("Clock") }
 
 enum class WeekStart(val label: String, val day: DayOfWeek?) {
     SYSTEM("System default", null),
