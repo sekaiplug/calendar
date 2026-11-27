@@ -41,6 +41,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
@@ -65,7 +67,6 @@ import app.expressivecalendar.data.FocusSession
 import app.expressivecalendar.data.SessionType
 import app.expressivecalendar.ui.ClockSubTab
 import app.expressivecalendar.ui.ClockViewModel
-import app.expressivecalendar.ui.PomodoroMode
 import app.expressivecalendar.ui.elasticClickable
 import java.time.LocalDate
 import java.time.YearMonth
@@ -139,59 +140,87 @@ fun ClockScreen(
 // -------------------------------------------------------------
 @Composable
 private fun PomodoroSection(vm: ClockViewModel) {
-    val mode by vm.pomodoroMode.collectAsStateWithLifecycle()
     val isRunning by vm.isPomoRunning.collectAsStateWithLifecycle()
     val remaining by vm.pomoSecondsRemaining.collectAsStateWithLifecycle()
     val elapsed by vm.pomoSecondsElapsed.collectAsStateWithLifecycle()
     val targetMinutes by vm.pomoTargetMinutes.collectAsStateWithLifecycle()
 
     val totalSeconds = targetMinutes * 60L
-    val progress = if (mode == PomodoroMode.COUNTDOWN) {
-        if (totalSeconds > 0) (remaining.toFloat() / totalSeconds.toFloat()).coerceIn(0f, 1f) else 0f
-    } else {
-        ((elapsed % 3600).toFloat() / 3600f)
-    }
+    val progress = if (totalSeconds > 0) (remaining.toFloat() / totalSeconds.toFloat()).coerceIn(0f, 1f) else 0f
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 24.dp, vertical = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceAround
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        // Mode Selector: Countdown vs Continuous (Direct Start)
-        Row(
+        // Slider selection bar (1 to 180 minutes)
+        Column(
             modifier = Modifier
-                .clip(RoundedCornerShape(24.dp))
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(20.dp))
                 .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            PomodoroMode.entries.forEach { m ->
-                val active = mode == m
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(20.dp))
-                        .background(if (active) MaterialTheme.colorScheme.primary else Color.Transparent)
-                        .clickable(enabled = !isRunning) { vm.setPomodoroMode(m) }
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                ) {
-                    Text(
-                        text = m.label,
-                        color = if (active) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal,
-                        fontSize = 13.sp
-                    )
-                }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Duration",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "$targetMinutes min${if (targetMinutes > 1) "s" else ""}",
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            Slider(
+                value = targetMinutes.toFloat(),
+                onValueChange = { vm.setPomoTarget(kotlin.math.round(it).toInt()) },
+                valueRange = 1f..180f,
+                steps = 178,
+                enabled = !isRunning,
+                colors = SliderDefaults.colors(
+                    thumbColor = MaterialTheme.colorScheme.primary,
+                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Text(
+                    text = "1m",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "60m",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = "180m",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
         // Circular Display
-        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(260.dp)) {
+        Box(contentAlignment = Alignment.Center, modifier = Modifier.size(250.dp)) {
             CircularProgressIndicator(
                 progress = { 1f },
                 modifier = Modifier.fillMaxSize(),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+                color = MaterialTheme.colorScheme.surfaceContainerHighest,
                 strokeWidth = 14.dp,
                 trackColor = Color.Transparent,
             )
@@ -205,53 +234,29 @@ private fun PomodoroSection(vm: ClockViewModel) {
             )
 
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                val displaySec = if (mode == PomodoroMode.COUNTDOWN) remaining else elapsed
-                val minutes = displaySec / 60
-                val seconds = displaySec % 60
+                val minutes = remaining / 60
+                val seconds = remaining % 60
                 Text(
                     text = String.format(Locale.getDefault(), "%02d:%02d", minutes, seconds),
                     style = MaterialTheme.typography.displayLarge.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 52.sp
+                        fontSize = 50.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 Text(
-                    text = if (mode == PomodoroMode.COUNTDOWN) "Target: $targetMinutes mins" else "Continuous Focus",
+                    text = if (isRunning) "Focusing" else "Ready to Focus",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
         }
 
-        // Preset Duration Chips (When in Countdown mode and paused)
-        if (mode == PomodoroMode.COUNTDOWN && !isRunning) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(15, 25, 45, 60).forEach { mins ->
-                    val isCurrent = targetMinutes == mins
-                    Box(
-                        modifier = Modifier
-                            .clip(CircleShape)
-                            .background(if (isCurrent) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surfaceContainer)
-                            .clickable { vm.setPomoTarget(mins) }
-                            .padding(horizontal = 14.dp, vertical = 8.dp)
-                    ) {
-                        Text(
-                            text = "${mins}m",
-                            color = if (isCurrent) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurface,
-                            fontWeight = FontWeight.Medium
-                        )
-                    }
-                }
-            }
-        } else {
-            Spacer(Modifier.height(36.dp))
-        }
-
         // Expressive Control Buttons
         Row(
             horizontalArrangement = Arrangement.spacedBy(20.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(bottom = 8.dp)
         ) {
             if (isRunning) {
                 IconButton(
@@ -282,7 +287,7 @@ private fun PomodoroSection(vm: ClockViewModel) {
                 ) {
                     Icon(Icons.Rounded.PlayArrow, "Start", tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(40.dp))
                 }
-                if (elapsed > 0 || (mode == PomodoroMode.COUNTDOWN && remaining < totalSeconds)) {
+                if (elapsed > 0 || remaining < totalSeconds) {
                     IconButton(
                         onClick = { vm.stopPomodoro() },
                         modifier = Modifier

@@ -24,11 +24,6 @@ enum class ClockSubTab(val label: String) {
     ANALYTICS("Analytics")
 }
 
-enum class PomodoroMode(val label: String) {
-    COUNTDOWN("Preset Countdown"),
-    COUNT_UP("Continuous Flow")
-}
-
 class ClockViewModel(app: Application) : AndroidViewModel(app) {
     private val repo = ClockRepository(app)
 
@@ -53,9 +48,6 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     // --- POMODORO STATE ---
-    private val _pomodoroMode = MutableStateFlow(PomodoroMode.COUNTDOWN)
-    val pomodoroMode = _pomodoroMode.asStateFlow()
-
     private val _pomoTargetMinutes = MutableStateFlow(25)
     val pomoTargetMinutes = _pomoTargetMinutes.asStateFlow()
 
@@ -70,12 +62,6 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
 
     private var pomoJob: Job? = null
 
-    fun setPomodoroMode(mode: PomodoroMode) {
-        if (_isPomoRunning.value) stopPomodoro()
-        _pomodoroMode.value = mode
-        resetPomodoro()
-    }
-
     fun setPomoTarget(minutes: Int) {
         if (_isPomoRunning.value) return
         _pomoTargetMinutes.value = minutes.coerceIn(1, 180)
@@ -89,20 +75,15 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
         pomoJob = viewModelScope.launch {
             while (_isPomoRunning.value) {
                 delay(1000)
-                if (_pomodoroMode.value == PomodoroMode.COUNTDOWN) {
-                    if (_pomoSecondsRemaining.value > 0) {
-                        _pomoSecondsRemaining.value -= 1
-                        _pomoSecondsElapsed.value += 1
-                    } else {
-                        // Completed!
-                        _isPomoRunning.value = false
-                        recordFocusSession(SessionType.POMODORO, _pomoSecondsElapsed.value)
-                        resetPomodoro()
-                        break
-                    }
-                } else {
-                    // Continuous Count up until user stops it
+                if (_pomoSecondsRemaining.value > 0) {
+                    _pomoSecondsRemaining.value -= 1
                     _pomoSecondsElapsed.value += 1
+                } else {
+                    // Completed!
+                    _isPomoRunning.value = false
+                    recordFocusSession(SessionType.POMODORO, _pomoSecondsElapsed.value)
+                    resetPomodoro()
+                    break
                 }
             }
         }
@@ -118,8 +99,7 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
         _isPomoRunning.value = false
         pomoJob?.cancel()
         if (elapsed >= 10) { // save if lasted more than 10s
-            val type = if (_pomodoroMode.value == PomodoroMode.COUNTDOWN) SessionType.POMODORO else SessionType.STOPWATCH
-            recordFocusSession(type, elapsed)
+            recordFocusSession(SessionType.POMODORO, elapsed)
         }
         resetPomodoro()
     }
