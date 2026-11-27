@@ -7,6 +7,8 @@ import app.expressivecalendar.data.AlarmItem
 import app.expressivecalendar.data.ClockRepository
 import app.expressivecalendar.data.FocusSession
 import app.expressivecalendar.data.SessionType
+import app.expressivecalendar.notify.ClockForegroundService
+import app.expressivecalendar.notify.ClockReceiver
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,8 +26,27 @@ enum class ClockSubTab(val label: String) {
     ANALYTICS("Analytics")
 }
 
-class ClockViewModel(app: Application) : AndroidViewModel(app) {
+class ClockViewModel(private val app: Application) : AndroidViewModel(app) {
     private val repo = ClockRepository(app)
+
+    init {
+        ClockReceiver.listener = object : ClockReceiver.ClockActionListener {
+            override fun onPause() {
+                if (_isPomoRunning.value) pausePomodoro()
+                else if (_isTimerRunning.value) pauseTimer()
+            }
+
+            override fun onResume() {
+                if (!_isPomoRunning.value && _currentSubTab.value == ClockSubTab.POMODORO) startPomodoro()
+                else if (!_isTimerRunning.value && _currentSubTab.value == ClockSubTab.TIMER) startTimer()
+            }
+
+            override fun onStop() {
+                if (_isPomoRunning.value) stopPomodoro()
+                else if (_isTimerRunning.value) resetTimer()
+            }
+        }
+    }
 
     val sessions: StateFlow<List<FocusSession>> = repo.sessionsFlow.stateIn(
         viewModelScope,
@@ -72,6 +93,7 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
         if (_isPomoRunning.value) return
         _isPomoRunning.value = true
         pomoJob?.cancel()
+        ClockForegroundService.start(app, "Pomodoro Focus", _pomoSecondsRemaining.value)
         pomoJob = viewModelScope.launch {
             while (_isPomoRunning.value) {
                 delay(1000)
@@ -81,6 +103,7 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
                 } else {
                     // Completed!
                     _isPomoRunning.value = false
+                    ClockForegroundService.stop(app)
                     recordFocusSession(SessionType.POMODORO, _pomoSecondsElapsed.value)
                     resetPomodoro()
                     break
@@ -92,12 +115,14 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
     fun pausePomodoro() {
         _isPomoRunning.value = false
         pomoJob?.cancel()
+        ClockForegroundService.pause(app, "Pomodoro Focus", _pomoSecondsRemaining.value)
     }
 
     fun stopPomodoro() {
         val elapsed = _pomoSecondsElapsed.value
         _isPomoRunning.value = false
         pomoJob?.cancel()
+        ClockForegroundService.stop(app)
         if (elapsed >= 10) { // save if lasted more than 10s
             recordFocusSession(SessionType.POMODORO, elapsed)
         }
@@ -132,12 +157,14 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
         if (_isTimerRunning.value) return
         _isTimerRunning.value = true
         timerJob?.cancel()
+        ClockForegroundService.start(app, "Timer Countdown", _timerRemainingSeconds.value)
         timerJob = viewModelScope.launch {
             while (_isTimerRunning.value && _timerRemainingSeconds.value > 0) {
                 delay(1000)
                 _timerRemainingSeconds.value -= 1
                 if (_timerRemainingSeconds.value <= 0) {
                     _isTimerRunning.value = false
+                    ClockForegroundService.stop(app)
                     recordFocusSession(SessionType.TIMER, _timerTargetSeconds.value)
                     _timerRemainingSeconds.value = _timerTargetSeconds.value
                     break
@@ -149,11 +176,13 @@ class ClockViewModel(app: Application) : AndroidViewModel(app) {
     fun pauseTimer() {
         _isTimerRunning.value = false
         timerJob?.cancel()
+        ClockForegroundService.pause(app, "Timer Countdown", _timerRemainingSeconds.value)
     }
 
     fun resetTimer() {
         _isTimerRunning.value = false
         timerJob?.cancel()
+        ClockForegroundService.stop(app)
         _timerRemainingSeconds.value = _timerTargetSeconds.value
     }
 

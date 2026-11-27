@@ -11,6 +11,8 @@
 
     <!-- Event reminders: the calendar provider schedules them, but a calendar app has to show them. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Exact snooze alarms. USE_EXACT_ALARM is auto-granted for calendar apps on 13+; the
          SCHEDULE_ variant is auto-granted on 12/12L. -->
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
@@ -60,6 +62,20 @@
 
         <receiver
             android:name=".notify.ReminderActionReceiver"
+            android:exported="false" />
+
+        <!-- Foreground Service for Pomodoro & Countdown Timer Live Alerts -->
+        <service
+            android:name=".notify.ClockForegroundService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Live timer and focus countdown alerts" />
+        </service>
+
+        <receiver
+            android:name=".notify.ClockReceiver"
             android:exported="false" />
 
         <receiver
