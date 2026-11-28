@@ -150,7 +150,13 @@ class ClockForegroundService : Service() {
 
         val extras = Bundle().apply {
             putBoolean("android.requestPromotedOngoing", true)
-            putBoolean("android.substName", true)
+            putBoolean("android.chronometer", true)
+            putBoolean("android.showChronometer", true)
+            putBoolean("android.showWhen", true)
+            putBoolean("android.substName", false)
+            // Tell OxygenOS/ColorOS Fluid Cloud to treat this as an active timer
+            putString("oplus_app_category", "timer")
+            putString("oplus_smart_type", "timer")
         }
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
@@ -160,6 +166,7 @@ class ClockForegroundService : Service() {
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            .setShowWhen(true)
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setWhen(endTime)
