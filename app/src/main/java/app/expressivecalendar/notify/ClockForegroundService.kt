@@ -8,6 +8,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import app.expressivecalendar.MainActivity
@@ -147,6 +148,11 @@ class ClockForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val extras = Bundle().apply {
+            putBoolean("android.requestPromotedOngoing", true)
+            putBoolean("android.substName", true)
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_event)
             .setContentTitle(title)
@@ -162,6 +168,8 @@ class ClockForegroundService : Service() {
             .addAction(0, "Stop", stopPendingIntent)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addExtras(extras)
             .build()
     }
 
@@ -200,6 +208,10 @@ class ClockForegroundService : Service() {
         val seconds = remainingSeconds % 60
         val timeFormatted = String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
 
+        val extras = Bundle().apply {
+            putBoolean("android.requestPromotedOngoing", true)
+        }
+
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_event)
             .setContentTitle(title)
@@ -213,6 +225,8 @@ class ClockForegroundService : Service() {
             .addAction(0, "Stop", stopPendingIntent)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .addExtras(extras)
             .build()
     }
 }

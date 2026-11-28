@@ -11,6 +11,7 @@
 
     <!-- Event reminders: the calendar provider schedules them, but a calendar app has to show them. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <!-- Exact snooze alarms. USE_EXACT_ALARM is auto-granted for calendar apps on 13+; the
