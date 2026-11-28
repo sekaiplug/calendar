@@ -93,6 +93,7 @@ class ClockViewModel(private val app: Application) : AndroidViewModel(app) {
         if (_isPomoRunning.value) return
         _isPomoRunning.value = true
         pomoJob?.cancel()
+        val endTime = System.currentTimeMillis() + (_pomoSecondsRemaining.value * 1000L)
         ClockForegroundService.start(app, "Pomodoro Focus", _pomoSecondsRemaining.value)
         pomoJob = viewModelScope.launch {
             while (_isPomoRunning.value) {
@@ -100,6 +101,7 @@ class ClockViewModel(private val app: Application) : AndroidViewModel(app) {
                 if (_pomoSecondsRemaining.value > 0) {
                     _pomoSecondsRemaining.value -= 1
                     _pomoSecondsElapsed.value += 1
+                    ClockForegroundService.updateTick(app, _pomoSecondsRemaining.value, endTime)
                 } else {
                     // Completed!
                     _isPomoRunning.value = false
@@ -157,6 +159,7 @@ class ClockViewModel(private val app: Application) : AndroidViewModel(app) {
         if (_isTimerRunning.value) return
         _isTimerRunning.value = true
         timerJob?.cancel()
+        val endTime = System.currentTimeMillis() + (_timerRemainingSeconds.value * 1000L)
         ClockForegroundService.start(app, "Timer Countdown", _timerRemainingSeconds.value)
         timerJob = viewModelScope.launch {
             while (_isTimerRunning.value && _timerRemainingSeconds.value > 0) {
@@ -168,6 +171,8 @@ class ClockViewModel(private val app: Application) : AndroidViewModel(app) {
                     recordFocusSession(SessionType.TIMER, _timerTargetSeconds.value)
                     _timerRemainingSeconds.value = _timerTargetSeconds.value
                     break
+                } else {
+                    ClockForegroundService.updateTick(app, _timerRemainingSeconds.value, endTime)
                 }
             }
         }

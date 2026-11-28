@@ -22,6 +22,7 @@ class ClockForegroundService : Service() {
         const val NOTIFICATION_ID = 202611
 
         const val ACTION_START = "app.expressivecalendar.action.START_TIMER"
+        const val ACTION_TICK = "app.expressivecalendar.action.TICK_TIMER"
         const val ACTION_PAUSE = "app.expressivecalendar.action.PAUSE_TIMER"
         const val ACTION_STOP = "app.expressivecalendar.action.STOP_TIMER"
 
@@ -43,6 +44,15 @@ class ClockForegroundService : Service() {
             } else {
                 context.startService(intent)
             }
+        }
+
+        fun updateTick(context: Context, remainingSeconds: Long, endTime: Long) {
+            val intent = Intent(context, ClockForegroundService::class.java).apply {
+                action = ACTION_TICK
+                putExtra(EXTRA_REMAINING_SECONDS, remainingSeconds)
+                putExtra(EXTRA_END_TIME, endTime)
+            }
+            context.startService(intent)
         }
 
         fun pause(context: Context, title: String, remainingSeconds: Long) {
@@ -87,10 +97,18 @@ class ClockForegroundService : Service() {
                 val notification = buildPausedNotification(title, remainingSeconds)
                 startForeground(NOTIFICATION_ID, notification)
             }
+            ACTION_TICK -> {
+                val remainingSeconds = intent.getLongExtra(EXTRA_REMAINING_SECONDS, 0L)
+                val endTime = intent.getLongExtra(EXTRA_END_TIME, System.currentTimeMillis())
+                val notification = buildRunningNotification("Focus Timer", endTime, remainingSeconds)
+                val nm = getSystemService(NotificationManager::class.java)
+                nm?.notify(NOTIFICATION_ID, notification)
+            }
             ACTION_START, null -> {
                 val title = intent?.getStringExtra(EXTRA_TITLE) ?: "Focus Timer"
+                val remainingSeconds = intent?.getLongExtra(EXTRA_REMAINING_SECONDS, 0L) ?: 0L
                 val endTime = intent?.getLongExtra(EXTRA_END_TIME, System.currentTimeMillis()) ?: System.currentTimeMillis()
-                val notification = buildRunningNotification(title, endTime)
+                val notification = buildRunningNotification(title, endTime, remainingSeconds)
                 startForeground(NOTIFICATION_ID, notification)
             }
         }
@@ -117,7 +135,7 @@ class ClockForegroundService : Service() {
         }
     }
 
-    private fun buildRunningNotification(title: String, endTime: Long): Notification {
+    private fun buildRunningNotification(title: String, endTime: Long, remainingSeconds: Long = 0L): Notification {
         val launchIntent = Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
@@ -148,8 +166,13 @@ class ClockForegroundService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
+        val minutes = remainingSeconds / 60
+        val seconds = remainingSeconds % 60
+        val shortTimeText = String.format(java.util.Locale.getDefault(), "%02d:%02d", minutes, seconds)
+
         val extras = Bundle().apply {
             putBoolean("android.requestPromotedOngoing", true)
+            putString("android.shortCriticalText", shortTimeText)
             putBoolean("android.chronometer", true)
             putBoolean("android.showChronometer", true)
             putBoolean("android.showWhen", true)
@@ -161,8 +184,9 @@ class ClockForegroundService : Service() {
 
         return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(R.drawable.ic_stat_event)
-            .setContentTitle(title)
+            .setContentTitle(shortTimeText)
             .setContentText("Focus session in progress")
+            .setSubText(title)
             .setCategory(NotificationCompat.CATEGORY_STOPWATCH)
             .setOngoing(true)
             .setOnlyAlertOnce(true)
